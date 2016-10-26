@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/lxc/lxd/shared"
 )
@@ -166,4 +167,9 @@ func (c *containerKVM) Start(stateful bool) error {
 func (c *containerKVM) Stop(stateful bool) error {
 	fmt.Println("Stopping, KVM here!")
 	return c.containerLXC.Stop(stateful)
+}
+
+func (c *containerKVM) Shutdown(timeout time.Duration) error {
+	fmt.Println("Shutdown, KVM here!")
+	return c.containerLXC.Shutdown(timeout)
 }
