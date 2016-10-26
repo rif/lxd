@@ -63,6 +63,7 @@ type initCmd struct {
 	profArgs profileList
 	confArgs configList
 	ephem    bool
+	kvm      bool
 	network  string
 }
 
@@ -74,7 +75,7 @@ func (c *initCmd) usage() string {
 	return i18n.G(
 		`Initialize a container from a particular image.
 
-lxc init [remote:]<image> [remote:][<name>] [--ephemeral|-e] [--profile|-p <profile>...] [--config|-c <key=value>...] [--network|-n <network>]
+lxc init [remote:]<image> [remote:][<name>] [--ephemeral|-e] [--kvm|-k] [--profile|-p <profile>...] [--config|-c <key=value>...] [--network|-n <network>]
 
 Initializes a container using the specified image and name.
 
@@ -90,6 +91,16 @@ func (c *initCmd) is_ephem(s string) bool {
 	case "-e":
 		return true
 	case "--ephemeral":
+		return true
+	}
+	return false
+}
+
+func (c *initCmd) is_kvm(s string) bool {
+	switch s {
+	case "-k":
+		return true
+	case "--kvm":
 		return true
 	}
 	return false
@@ -138,6 +149,8 @@ func (c *initCmd) flags() {
 	gnuflag.Var(&c.profArgs, "p", i18n.G("Profile to apply to the new container"))
 	gnuflag.BoolVar(&c.ephem, "ephemeral", false, i18n.G("Ephemeral container"))
 	gnuflag.BoolVar(&c.ephem, "e", false, i18n.G("Ephemeral container"))
+	gnuflag.BoolVar(&c.kvm, "kvm", false, i18n.G("KVM container"))
+	gnuflag.BoolVar(&c.kvm, "k", false, i18n.G("KVM container"))
 	gnuflag.StringVar(&c.network, "network", "", i18n.G("Network name"))
 	gnuflag.StringVar(&c.network, "n", "", i18n.G("Network name"))
 }
@@ -197,9 +210,9 @@ func (c *initCmd) run(config *lxd.Config, args []string) error {
 	}
 
 	if !initRequestedEmptyProfiles && len(profiles) == 0 {
-		resp, err = d.Init(name, iremote, image, nil, configMap, devicesMap, c.ephem)
+		resp, err = d.Init(name, iremote, image, nil, configMap, devicesMap, c.ephem, c.kvm)
 	} else {
-		resp, err = d.Init(name, iremote, image, &profiles, configMap, devicesMap, c.ephem)
+		resp, err = d.Init(name, iremote, image, &profiles, configMap, devicesMap, c.ephem, c.kvm)
 	}
 	if err != nil {
 		return err

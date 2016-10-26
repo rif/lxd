@@ -14,6 +14,7 @@ type copyCmd struct {
 	profArgs profileList
 	confArgs configList
 	ephem    bool
+	kvm      bool
 }
 
 func (c *copyCmd) showByDefault() bool {
@@ -34,9 +35,11 @@ func (c *copyCmd) flags() {
 	gnuflag.Var(&c.profArgs, "p", i18n.G("Profile to apply to the new container"))
 	gnuflag.BoolVar(&c.ephem, "ephemeral", false, i18n.G("Ephemeral container"))
 	gnuflag.BoolVar(&c.ephem, "e", false, i18n.G("Ephemeral container"))
+	gnuflag.BoolVar(&c.kvm, "kvm", false, i18n.G("KVM container"))
+	gnuflag.BoolVar(&c.kvm, "k", false, i18n.G("KVM container"))
 }
 
-func (c *copyCmd) copyContainer(config *lxd.Config, sourceResource string, destResource string, keepVolatile bool, ephemeral int) error {
+func (c *copyCmd) copyContainer(config *lxd.Config, sourceResource string, destResource string, keepVolatile bool, ephemeral, kvm int) error {
 	sourceRemote, sourceName := config.ParseRemoteAndContainer(sourceResource)
 	destRemote, destName := config.ParseRemoteAndContainer(destResource)
 
@@ -115,7 +118,7 @@ func (c *copyCmd) copyContainer(config *lxd.Config, sourceResource string, destR
 			return fmt.Errorf(i18n.G("can't copy to the same container name"))
 		}
 
-		cp, err := source.LocalCopy(sourceName, destName, status.Config, status.Profiles, ephemeral == 1)
+		cp, err := source.LocalCopy(sourceName, destName, status.Config, status.Profiles, ephemeral == 1, kvm == 1)
 		if err != nil {
 			return err
 		}
@@ -210,7 +213,7 @@ func (c *copyCmd) copyContainer(config *lxd.Config, sourceResource string, destR
 		var migration *lxd.Response
 
 		sourceWSUrl := "https://" + addr + sourceWSResponse.Operation
-		migration, err = dest.MigrateFrom(destName, sourceWSUrl, source.Certificate, secrets, status.Architecture, status.Config, status.Devices, status.Profiles, baseImage, ephemeral == 1, false, source, sourceWSResponse.Operation)
+		migration, err = dest.MigrateFrom(destName, sourceWSUrl, source.Certificate, secrets, status.Architecture, status.Config, status.Devices, status.Profiles, baseImage, ephemeral == 1, kvm == 1, false, source, sourceWSResponse.Operation)
 		if err != nil {
 			continue
 		}
@@ -257,9 +260,14 @@ func (c *copyCmd) run(config *lxd.Config, args []string) error {
 		ephem = 1
 	}
 
-	if len(args) < 2 {
-		return c.copyContainer(config, args[0], "", false, ephem)
+	kvm := 0
+	if c.kvm {
+		kvm = 1
 	}
 
-	return c.copyContainer(config, args[0], args[1], false, ephem)
+	if len(args) < 2 {
+		return c.copyContainer(config, args[0], "", false, ephem, kvm)
+	}
+
+	return c.copyContainer(config, args[0], args[1], false, ephem, kvm)
 }

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/lxc/go-lxc.v2"
+	lxc "gopkg.in/lxc/go-lxc.v2"
 
 	"github.com/lxc/lxd/shared"
 )
@@ -313,6 +313,7 @@ type containerArgs struct {
 	Ctype        containerType
 	Devices      shared.Devices
 	Ephemeral    bool
+	Kvm          bool
 	Name         string
 	Profiles     []string
 	Stateful     bool
@@ -639,6 +640,10 @@ func containerCreateInternal(d *Daemon, args containerArgs) (container, error) {
 	args.CreationDate = dbArgs.CreationDate
 	args.LastUsedDate = dbArgs.LastUsedDate
 
+	if args.Kvm {
+		return containerKVMCreate(d, args)
+	}
+
 	return containerLXCCreate(d, args)
 }
 
@@ -680,6 +685,10 @@ func containerLoadByName(d *Daemon, name string) (container, error) {
 	args, err := dbContainerGet(d.db, name)
 	if err != nil {
 		return nil, err
+	}
+
+	if args.Kvm {
+		return containerKVMLoad(d, args)
 	}
 
 	return containerLXCLoad(d, args)

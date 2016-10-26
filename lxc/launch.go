@@ -22,7 +22,7 @@ func (c *launchCmd) usage() string {
 	return i18n.G(
 		`Launch a container from a particular image.
 
-lxc launch [remote:]<image> [remote:][<name>] [--ephemeral|-e] [--profile|-p <profile>...] [--config|-c <key=value>...] [--network|-n <network>]
+lxc launch [remote:]<image> [remote:][<name>] [--ephemeral|-e]  [--kvm|-k] [--profile|-p <profile>...] [--config|-c <key=value>...] [--network|-n <network>]
 
 Launches a container using the specified image and name.
 
@@ -43,6 +43,8 @@ func (c *launchCmd) flags() {
 	gnuflag.Var(&c.init.profArgs, "p", i18n.G("Profile to apply to the new container"))
 	gnuflag.BoolVar(&c.init.ephem, "ephemeral", false, i18n.G("Ephemeral container"))
 	gnuflag.BoolVar(&c.init.ephem, "e", false, i18n.G("Ephemeral container"))
+	gnuflag.BoolVar(&c.init.kvm, "kvm", false, i18n.G("KVM container"))
+	gnuflag.BoolVar(&c.init.kvm, "k", false, i18n.G("KVM container"))
 	gnuflag.StringVar(&c.init.network, "network", "", i18n.G("Network name"))
 	gnuflag.StringVar(&c.init.network, "n", "", i18n.G("Network name"))
 }
@@ -94,9 +96,9 @@ func (c *launchCmd) run(config *lxd.Config, args []string) error {
 	}
 
 	if !initRequestedEmptyProfiles && len(profiles) == 0 {
-		resp, err = d.Init(name, iremote, image, nil, configMap, devicesMap, c.init.ephem)
+		resp, err = d.Init(name, iremote, image, nil, configMap, devicesMap, c.init.ephem, c.init.kvm)
 	} else {
-		resp, err = d.Init(name, iremote, image, &profiles, configMap, devicesMap, c.init.ephem)
+		resp, err = d.Init(name, iremote, image, &profiles, configMap, devicesMap, c.init.ephem, c.init.kvm)
 	}
 
 	if err != nil {
