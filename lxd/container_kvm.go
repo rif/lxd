@@ -162,3 +162,8 @@ func (c *containerKVM) Start(stateful bool) error {
 	fmt.Println("Hello, KVM here!")
 	return c.containerLXC.Start(stateful)
 }
+
+func (c *containerKVM) Stop(stateful bool) error {
+	fmt.Println("Stopping, KVM here!")
+	return c.containerLXC.Stop(stateful)
+}
